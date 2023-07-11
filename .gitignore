@@ -31,3 +31,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+.DS_Store
+core/consumer-rules.pro
+core/proguard-rules.pro
