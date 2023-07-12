@@ -1,16 +1,17 @@
 package com.example.movielistassignment.presentation.login
 
 import android.os.Bundle
+import android.text.InputFilter
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.addTextChangedListener
+import androidx.navigation.fragment.findNavController
+import com.example.movielistassignment.MainActivity
 import com.example.movielistassignment.R
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import com.example.movielistassignment.databinding.FragmentLoginBinding
+import com.example.movielistassignment.extension.isValidEmail
 
 /**
  * A simple [Fragment] subclass.
@@ -18,43 +19,76 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class LoginFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
+    private lateinit var binding: FragmentLoginBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        binding = FragmentLoginBinding.inflate(inflater)
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_login, container, false)
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment LoginFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            LoginFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setToolbar()
+        addListeners()
+    }
+
+    private fun setToolbar() {
+        val toolbar = (requireActivity() as MainActivity).toolbar
+        toolbar.title = getString(R.string.str_login_screen)
+        toolbar.navigationIcon = null
+    }
+
+    private fun addListeners() {
+        binding.tiePassword.filters = binding.tiePassword.filters.let {
+            it + InputFilter { source, _, _, _, _, _ ->
+                source.filterNot { char -> char.isWhitespace() }
+            }
+        }
+        binding.tieEmail.addTextChangedListener {
+            it?.let {
+                if (it.toString().isValidEmail().not()) {
+                    binding.tilEmail.error = getString(R.string.str_email_error)
+                    binding.loginBtn.isEnabled = false
+                } else {
+                    binding.tilEmail.error = ""
+                    isValidForm()
                 }
             }
+        }
+
+        binding.tiePassword.addTextChangedListener {
+            it?.let {
+                if (it.toString().length !in 8..15) {
+                    binding.tilPassword.error = getString(R.string.str_password_error)
+                    binding.loginBtn.isEnabled = false
+                } else {
+                    binding.tilPassword.error = ""
+                    isValidForm()
+                }
+            }
+        }
+
+        binding.loginBtn.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_bottomSheetSampleFragment)
+        }
     }
+
+    private fun isValidForm() {
+        if (binding.tieEmail.text?.toString()?.isValidEmail() == true &&
+            (binding.tiePassword.text?.toString()?.length ?: 0) in 8..15
+        ) {
+            binding.loginBtn.isEnabled = true
+            return
+        }
+        binding.loginBtn.isEnabled = false
+    }
+
 }

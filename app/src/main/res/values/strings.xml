@@ -2,4 +2,14 @@
     <string name="app_name">MovieList Assignment</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="str_email">Email</string>
+    <string name="str_password">Password</string>
+    <string name="str_login">Login</string>
+    <string name="str_email_error">Email is invalid</string>
+    <string name="str_password_error">Password should be between 8 to 15 chars</string>
+    <string name="str_no_movies">Oops there is no Data to display !!!</string>
+
+    <string name="str_login_screen">Login Scree</string>
+    <string name="str_movie_screen">Movies Screen</string>
 </resources>
