@@ -5,56 +5,113 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
+import com.example.core.di.DaggerCoreComponent
+import com.example.movielistassignment.MainActivity
 import com.example.movielistassignment.R
+import com.example.movielistassignment.databinding.FragmentMovieListBinding
+import com.example.movielistassignment.extension.gone
+import com.example.movielistassignment.extension.visible
+import com.example.movielistassignment.presentation.common.MovieDataState
+import com.example.movielistassignment.presentation.di.DaggerAppComponent
+import javax.inject.Inject
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
 /**
  * A simple [Fragment] subclass.
  * Use the [MovieListFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
 class MovieListFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
+    private lateinit var movieViewModel: MovieViewModel
+    private lateinit var binding: FragmentMovieListBinding
+    private val movieList = arrayListOf<MovieData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        binding = FragmentMovieListBinding.inflate(inflater)
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_movie_list, container, false)
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MovieListFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MovieListFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        DaggerAppComponent.factory().create(DaggerCoreComponent.create()).inject(this)
+        super.onViewCreated(view, savedInstanceState)
+        setToolbar()
+        initView()
+        movieViewModel = ViewModelProvider(this, viewModelFactory)[MovieViewModel::class.java]
+        movieViewModel.getMovies()
+        observeData()
+    }
+
+    private fun setToolbar() {
+        val toolbar = (requireActivity() as MainActivity).toolbar
+        toolbar.title = getString(R.string.str_movie_screen)
+        toolbar.setNavigationIcon(R.drawable.arrow_back)
+        toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+    }
+
+    private fun initView() {
+        binding.movieList.apply {
+            adapter = MovieAdapter(movieList)
+            layoutManager = GridLayoutManager(requireActivity(), 2)
+        }
+    }
+
+    private fun observeData() {
+        movieViewModel.movieData.observe(this.viewLifecycleOwner) {
+            when (it) {
+                is MovieDataState.LoadingState -> {
+                    binding.progress.visible()
+                    binding.movieList.gone()
+                    binding.noMovies.gone()
+                }
+                is MovieDataState.SuccessState -> {
+                    binding.progress.gone()
+                    movieList.addAll(it.data)
+                    binding.movieList.adapter?.notifyItemRangeChanged(0, it.data.size)
+                    checkMovieListEmpty()
+                }
+                is MovieDataState.ErrorState -> {
+                    binding.progress.gone()
+                    checkMovieListEmpty()
                 }
             }
+        }
+        binding.movieList.addOnScrollListener(object : OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (movieList.isNotEmpty() && (recyclerView.layoutManager as? LinearLayoutManager)?.findLastCompletelyVisibleItemPosition() == movieList.size - 1) {
+                    movieViewModel.getMovies()
+                }
+            }
+        })
+    }
+
+    private fun checkMovieListEmpty() {
+        if (movieList.isEmpty()) {
+            binding.movieList.gone()
+            binding.noMovies.visible()
+        } else {
+            binding.movieList.visible()
+            binding.noMovies.gone()
+        }
     }
 }
