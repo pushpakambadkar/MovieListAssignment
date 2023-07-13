@@ -11,7 +11,7 @@ import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [ViewModelModule::class], dependencies = [CoreComponent::class])
+@Component(modules = [ViewModelModule::class, AppModule::class, UtilityModule::class], dependencies = [CoreComponent::class])
 interface AppComponent {
 
     fun inject(fragment: MovieListFragment)
@@ -19,8 +19,7 @@ interface AppComponent {
     @Component.Factory
     interface Factory {
         // Takes an instance of AppComponent when creating
-        // an instance of LoginComponent
-        fun create(coreComponent: CoreComponent): AppComponent
+        fun create(coreComponent: CoreComponent, appModule: AppModule): AppComponent
     }
 
 }

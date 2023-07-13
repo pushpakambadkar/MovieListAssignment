@@ -10,6 +10,6 @@
     <string name="str_password_error">Password should be between 8 to 15 chars</string>
     <string name="str_no_movies">Oops there is no Data to display !!!</string>
 
-    <string name="str_login_screen">Login Scree</string>
+    <string name="str_login_screen">Login Screen</string>
     <string name="str_movie_screen">Movies Screen</string>
 </resources>

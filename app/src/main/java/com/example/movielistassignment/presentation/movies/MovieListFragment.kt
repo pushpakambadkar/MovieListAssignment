@@ -1,25 +1,30 @@
 package com.example.movielistassignment.presentation.movies
 
+import android.graphics.Rect
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.example.core.di.DaggerCoreComponent
 import com.example.movielistassignment.MainActivity
+import com.example.movielistassignment.MovieApplication
 import com.example.movielistassignment.R
 import com.example.movielistassignment.databinding.FragmentMovieListBinding
 import com.example.movielistassignment.extension.gone
 import com.example.movielistassignment.extension.visible
 import com.example.movielistassignment.presentation.common.MovieDataState
 import com.example.movielistassignment.presentation.di.DaggerAppComponent
+import com.example.movielistassignment.presentation.utility.GridSpacingItemDecoration
 import javax.inject.Inject
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -32,6 +37,8 @@ class MovieListFragment : Fragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
+    @Inject
+    lateinit var gridSpacingItemDecoration: GridSpacingItemDecoration
     private lateinit var movieViewModel: MovieViewModel
     private lateinit var binding: FragmentMovieListBinding
     private val movieList = arrayListOf<MovieData>()
@@ -50,12 +57,12 @@ class MovieListFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        DaggerAppComponent.factory().create(DaggerCoreComponent.create()).inject(this)
+        (requireActivity().application as MovieApplication).appComponent.inject(this)
         super.onViewCreated(view, savedInstanceState)
         setToolbar()
         initView()
         movieViewModel = ViewModelProvider(this, viewModelFactory)[MovieViewModel::class.java]
-        movieViewModel.getMovies()
+        movieViewModel.getConfigurations()
         observeData()
     }
 
@@ -72,6 +79,7 @@ class MovieListFragment : Fragment() {
         binding.movieList.apply {
             adapter = MovieAdapter(movieList)
             layoutManager = GridLayoutManager(requireActivity(), 2)
+            addItemDecoration(gridSpacingItemDecoration)
         }
     }
 
@@ -99,7 +107,7 @@ class MovieListFragment : Fragment() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (movieList.isNotEmpty() && (recyclerView.layoutManager as? LinearLayoutManager)?.findLastCompletelyVisibleItemPosition() == movieList.size - 1) {
-                    movieViewModel.getMovies()
+                    movieViewModel.loadMovies()
                 }
             }
         })
