@@ -15,34 +15,40 @@ class MovieViewModel @Inject constructor(private val getMovieUseCase: GetMovieUs
 
     private val _movieData = MutableLiveData<MovieDataState>()
     val movieData: LiveData<MovieDataState> = _movieData
+    private var baseImageUrl = ""
     private var currentPage = 0
     private var totalPages = 0
 
-    fun getMovies() {
+    fun getConfigurations() {
         if (currentPage > totalPages) {
             return
         }
-        if (currentPage == 0) {
-            _movieData.value = MovieDataState.LoadingState
-        }
+        _movieData.value = MovieDataState.LoadingState
         viewModelScope.launch {
             val defer = async { getMovieUseCase.getConfigurations() }
             when (val configurations = defer.await()) {
                 is com.example.core.Result.Success, is com.example.core.Result.Error -> {
-                    when (val data = getMovieUseCase.invoke(++currentPage)) {
-                        is com.example.core.Result.Success -> {
-                            val imageUrl = if (configurations is com.example.core.Result.Success) {
-                                configurations.data.images.secureBaseUrl + configurations.data.images.posterSizes[3]
-                            } else ""
-                            _movieData.value = data.data.movieEntity.map { MovieData.from(it, imageUrl) }.let {
-                                MovieDataState.SuccessState(it)
-                            }
-                            currentPage = data.data.page
-                            totalPages = data.data.totalPages
-                        }
-                        else -> _movieData.value = MovieDataState.ErrorState
-                    }
+                    baseImageUrl = if (configurations is com.example.core.Result.Success) {
+                        configurations.data.images.secureBaseUrl + configurations.data.images.posterSizes[3]
+                    } else ""
+                    loadMovies()
                 }
+            }
+        }
+    }
+
+    fun loadMovies() {
+        viewModelScope.launch {
+            when (val data = getMovieUseCase.invoke(++currentPage)) {
+                is com.example.core.Result.Success -> {
+                    _movieData.value =
+                        data.data.movieEntity.map { MovieData.from(it, baseImageUrl) }.let {
+                            MovieDataState.SuccessState(it)
+                        }
+                    currentPage = data.data.page
+                    totalPages = data.data.totalPages
+                }
+                else -> _movieData.value = MovieDataState.ErrorState
             }
         }
     }
