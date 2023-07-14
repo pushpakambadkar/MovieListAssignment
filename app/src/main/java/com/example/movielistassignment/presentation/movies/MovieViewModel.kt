@@ -31,13 +31,16 @@ class MovieViewModel @Inject constructor(private val getMovieUseCase: GetMovieUs
                     baseImageUrl = if (configurations is com.example.core.Result.Success) {
                         configurations.data.images.secureBaseUrl + configurations.data.images.posterSizes[3]
                     } else ""
-                    loadMovies()
+                    loadMovies(true)
                 }
             }
         }
     }
 
-    fun loadMovies() {
+    fun loadMovies(firstTime: Boolean) {
+        if (firstTime) {
+            currentPage = 0
+        }
         viewModelScope.launch {
             when (val data = getMovieUseCase.invoke(++currentPage)) {
                 is com.example.core.Result.Success -> {
