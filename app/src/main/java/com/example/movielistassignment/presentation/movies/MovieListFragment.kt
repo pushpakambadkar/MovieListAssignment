@@ -107,7 +107,7 @@ class MovieListFragment : Fragment() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (movieList.isNotEmpty() && (recyclerView.layoutManager as? LinearLayoutManager)?.findLastCompletelyVisibleItemPosition() == movieList.size - 1) {
-                    movieViewModel.loadMovies()
+                    movieViewModel.loadMovies(false)
                 }
             }
         })
